@@ -1,0 +1,88 @@
+# Apache Configuration for PASSERELLES
+# Enable this if on Apache hosting (cPanel, Shared hosting, etc.)
+
+# Enable GZIP Compression
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
+</IfModule>
+
+# Browser Caching
+<IfModule mod_expires.c>
+  ExpiresActive On
+  
+  # Images (1 year)
+  ExpiresByType image/jpeg A31536000
+  ExpiresByType image/gif A31536000
+  ExpiresByType image/png A31536000
+  ExpiresByType image/webp A31536000
+  ExpiresByType image/svg+xml A31536000
+  
+  # CSS & JS (1 month)
+  ExpiresByType text/css A2592000
+  ExpiresByType application/javascript A2592000
+  ExpiresByType text/javascript A2592000
+  
+  # Fonts (1 year)
+  ExpiresByType font/ttf A31536000
+  ExpiresByType font/otf A31536000
+  ExpiresByType font/woff A31536000
+  ExpiresByType font/woff2 A31536000
+  
+  # HTML (1 day - revalidate frequently)
+  ExpiresByType text/html A86400
+  
+  # Default (1 week)
+  ExpiresDefault A604800
+</IfModule>
+
+# Security Headers
+<IfModule mod_headers.c>
+  # Prevent MIME type sniffing
+  Header set X-Content-Type-Options "nosniff"
+  
+  # Prevent clickjacking (frame embedding)
+  Header set X-Frame-Options "SAMEORIGIN"
+  
+  # XSS Protection
+  Header set X-XSS-Protection "1; mode=block"
+  
+  # Referrer Policy
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  
+  # Content Security Policy (adjust as needed)
+  Header set Content-Security-Policy "default-src 'self'; script-src 'self' www.googletagmanager.com 'unsafe-inline'; style-src 'self' fonts.googleapis.com 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' fonts.gstatic.com; connect-src 'self' www.google-analytics.com; frame-src forms.google.com;"
+</IfModule>
+
+# Redirect HTTP to HTTPS
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTPS} off
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# Remove index.html from URL (optional)
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^(.*)\.html$ $1 [R=301,L]
+</IfModule>
+
+# Block access to sensitive files
+<FilesMatch "^\.|^#.*#|~$">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+# Allow access to public files
+<FilesMatch "\.(html|css|js|json|png|jpg|jpeg|gif|svg|woff|woff2|ttf|otf|eot|ico)$">
+  <IfModule mod_authz_core.c>
+    Require all granted
+  </IfModule>
+</FilesMatch>
